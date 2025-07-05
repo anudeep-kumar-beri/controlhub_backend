@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
-// IMPORTANT: Ensure this path and model name match your actual Mongoose model for the board.
-// Based on your GitHub repo, it should be 'FileShareBoard'.
+// IMPORTANT: This line correctly imports the Mongoose model from the 'models' directory.
 const FileShareBoard = require('../models/FileShareBoard'); 
 
 // @route   GET /api/fileshare
