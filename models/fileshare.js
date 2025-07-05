@@ -1,28 +1,36 @@
-const mongoose = require('mongoose');
+    const mongoose = require('mongoose');
 
-const FileShareSchema = new mongoose.Schema({
-  version: String,
-  changelog: [
-    {
-      version: String,
-      date: String,
-      time: String,
-      summary: String,
-    },
-  ],
-  bugs: [
-    {
-      text: String,
-      status: { type: String, default: 'Pending' },
-    },
-  ],
-  features: [
-    {
-      text: String,
-      status: { type: String, default: 'Planned' },
-      link: String,
-    },
-  ],
-}, { timestamps: true });
+    const FileShareBoardSchema = new mongoose.Schema({
+      version: {
+        type: String,
+        default: 'v0.0.0'
+      },
+      changelog: [
+        {
+          version: { type: String, required: true },
+          summary: { type: String, required: true },
+          date: { type: String, required: true },
+          time: { type: String, required: true }
+        }
+      ],
+      bugs: [
+        {
+          text: { type: String, required: true },
+          status: { type: String, enum: ['Pending', 'In Progress', 'Fixed'], default: 'Pending' }
+        }
+      ],
+      features: [
+        {
+          text: { type: String, required: true },
+          status: { type: String, enum: ['Planned', 'In Progress', 'Complete'], default: 'Planned' },
+          link: { type: String } // Optional link for features
+        }
+      ],
+      createdAt: {
+        type: Date,
+        default: Date.now
+      }
+    });
 
-module.exports = mongoose.model('FileShare', FileShareSchema);
+    module.exports = mongoose.model('FileShareBoard', FileShareBoardSchema);
+    
