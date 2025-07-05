@@ -1,49 +1,111 @@
 const express = require('express');
 const router = express.Router();
-const FileShare = require('../models/fileshare');
+// IMPORTANT: Ensure this path and model name match your actual Mongoose model for the board.
+// Based on your GitHub repo, it should be 'FileShareBoard'.
+const FileShareBoard = require('../models/FileShareBoard'); 
 
-// GET all entries
+// @route   GET /api/fileshare
+// @desc    Get the single file share board document. If none exists, create a default.
+// @access  Public
 router.get('/', async (req, res) => {
   try {
-    const entries = await FileShare.find();
-    res.json(entries);
+    let board = await FileShareBoard.findOne(); // Attempt to find one board document
+
+    if (!board) {
+      // If no board document is found, create a default one
+      console.warn('No existing FileShareBoard document found. Creating a default one.');
+      board = new FileShareBoard({
+        version: 'v0.0.1',
+        changelog: [{ 
+          version: 'v0.0.1', 
+          summary: 'Initial project board created.', 
+          date: new Date().toISOString().split('T')[0], 
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        }],
+        bugs: [],
+        features: []
+      });
+      await board.save(); // Save the newly created board to the database
+    }
+    res.json(board); // Send back the single board document (either found or newly created)
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in GET /api/fileshare:', err.message);
+    res.status(500).json({ error: 'Server Error fetching or creating board.' });
   }
 });
 
-// POST new entry
+// @route   POST /api/fileshare
+// @desc    Create a new file share board. This route is typically used for initial creation
+//          if the GET route doesn't auto-create, or if you want to explicitly reset.
+//          Your frontend might not call this directly if GET handles creation.
+// @access  Public
 router.post('/', async (req, res) => {
   try {
-    const newEntry = new FileShare(req.body);
-    const saved = await newEntry.save();
-    res.status(201).json(saved);
+    const existingBoard = await FileShareBoard.findOne();
+    if (existingBoard) {
+      return res.status(400).json({ msg: 'File share board already exists. Use PUT to update.' });
+    }
+
+    const { version, changelog, bugs, features } = req.body;
+    const newBoard = new FileShareBoard({
+      version: version || 'v1.0.0',
+      changelog: changelog || [],
+      bugs: bugs || [],
+      features: features || []
+    });
+
+    const board = await newBoard.save();
+    res.status(201).json(board);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Error in POST /api/fileshare:', err.message);
+    res.status(500).json({ error: 'Server Error creating board.' });
   }
 });
 
-// PUT update entry
+// @route   PUT /api/fileshare/:id
+// @desc    Update the single file share board document
+// @access  Public
 router.put('/:id', async (req, res) => {
+  const { version, changelog, bugs, features } = req.body;
+  const updatedFields = {};
+  // Only add fields to update if they are provided in the request body
+  if (version !== undefined) updatedFields.version = version;
+  if (changelog !== undefined) updatedFields.changelog = changelog;
+  if (bugs !== undefined) updatedFields.bugs = bugs;
+  if (features !== undefined) updatedFields.features = features;
+
   try {
-    const updated = await FileShare.findByIdAndUpdate(
+    // Find and update the board by its ID
+    const board = await FileShareBoard.findByIdAndUpdate(
       req.params.id,
-      req.body,
-      { new: true }
+      { $set: updatedFields }, // Use $set to update specific fields
+      { new: true, runValidators: true } // 'new: true' returns the updated document; 'runValidators' ensures schema validation
     );
-    res.json(updated);
+
+    if (!board) {
+      return res.status(404).json({ msg: 'Board not found' });
+    }
+
+    res.json(board); // Send back the updated board document
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    console.error('Error in PUT /api/fileshare/:id:', err.message);
+    res.status(500).json({ error: 'Server Error updating board.' });
   }
 });
 
-// DELETE entry
+// @route   DELETE /api/fileshare/:id
+// @desc    Delete the file share board document (use with extreme caution!)
+// @access  Public
 router.delete('/:id', async (req, res) => {
   try {
-    await FileShare.findByIdAndDelete(req.params.id);
-    res.sendStatus(204);
+    const board = await FileShareBoard.findByIdAndDelete(req.params.id);
+    if (!board) {
+      return res.status(404).json({ msg: 'Board not found' });
+    }
+    res.status(204).send(); // Send a 204 No Content status for successful deletion
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('Error in DELETE /api/fileshare/:id:', err.message);
+    res.status(500).json({ error: 'Server Error deleting board.' });
   }
 });
 
