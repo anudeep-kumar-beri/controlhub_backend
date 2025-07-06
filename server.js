@@ -8,10 +8,18 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: 'https://controlhub-frontend-cbegxqxtu-anudeep-kumar-beris-projects.vercel.app',
+  origin: (origin, callback) => {
+    if (
+      origin &&
+      (origin.endsWith('.vercel.app') || allowedOrigins.includes(origin))
+    ) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
-app.use(express.json());
 
 // Import and Mount routes
 const skillRoutes = require('./routes/skills');
