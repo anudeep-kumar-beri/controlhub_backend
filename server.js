@@ -9,30 +9,29 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 
-const corsOptions = {
-  origin: function (origin, callback) {
-    const allowedOrigins = [
+const allowedOrigins = [
   'http://localhost:3000',
   'https://controlhub-frontend.vercel.app',
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (
-      !origin ||                              // allow Postman/server-side
-      allowedOrigins.includes(origin) ||      // allow specific known ones
-      /\.vercel\.app$/.test(new URL(origin).hostname) // ✅ any *.vercel.app subdomain
-    ) {
-      callback(null, true);
-    } else {
-      callback(new Error(`Not allowed by CORS: ${origin}`));
+    try {
+      if (
+        !origin || 
+        allowedOrigins.includes(origin) ||
+        /\.vercel\.app$/.test(new URL(origin).hostname)
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    } catch (e) {
+      callback(new Error('Invalid origin'));
     }
   },
-  credentials: true
+  credentials: true,
 }));
-
-
-app.use(cors(corsOptions));
 
 // Routes
 const skillRoutes = require('./routes/skills');
@@ -49,14 +48,17 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/journal', journalRoutes);
 
+// Optional: Health check
 app.get('/api/ping', (req, res) => res.send('pong'));
 
-// Mongo connection
-mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/controlhub')
+// MongoDB connection
+mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-    app.listen(PORT, () =>
-      console.log(`🚀 Server running at http://localhost:${PORT}`)
-    );
+    app.listen(PORT, () => {
+      console.log(`🚀 Server running at http://localhost:${PORT}`);
+    });
   })
-  .catch(err => console.error('❌ MongoDB connection error:', err));
+  .catch(err => {
+    console.error('❌ MongoDB connection error:', err);
+  });
