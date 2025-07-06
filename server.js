@@ -9,52 +9,44 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(express.json());
 
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://controlhub-frontend.vercel.app',
-];
-
+// CORS Configuration
 app.use(cors({
   origin: (origin, callback) => {
     try {
-      // Allow no origin (Postman, SSR), any *.vercel.app subdomain, or known dev hosts
-      if (
+      const allowed =
         !origin ||
         origin === 'http://localhost:3000' ||
         origin === 'https://controlhub-frontend.vercel.app' ||
-        /\.vercel\.app$/.test(new URL(origin).hostname)
-      ) {
+        /\.vercel\.app$/.test(new URL(origin).hostname);
+
+      if (allowed) {
         callback(null, true);
       } else {
+        console.warn(`❌ CORS Rejected: ${origin}`);
         callback(new Error('Not allowed by CORS'));
       }
     } catch (e) {
+      console.error('❌ CORS Error:', e.message);
       callback(new Error('Invalid origin'));
     }
   },
   credentials: true
 }));
 
-
 // Routes
-const skillRoutes = require('./routes/skills');
-const fileShareRoutes = require('./routes/fileshare');
-const weeklyRoutes = require('./routes/weeklylogs');
-const jobRoutes = require('./routes/jobs');
-const bookmarkRoutes = require('./routes/bookmarks');
-const journalRoutes = require('./routes/journal');
+app.use('/api/skills', require('./routes/skills'));
+app.use('/api/fileshare', require('./routes/fileshare'));
+app.use('/api/weeklylogs', require('./routes/weeklylogs'));
+app.use('/api/jobs', require('./routes/jobs'));
+app.use('/api/bookmarks', require('./routes/bookmarks'));
+app.use('/api/journal', require('./routes/journal'));
 
-app.use('/api/skills', skillRoutes);
-app.use('/api/fileshare', fileShareRoutes);
-app.use('/api/weeklylogs', weeklyRoutes);
-app.use('/api/jobs', jobRoutes);
-app.use('/api/bookmarks', bookmarkRoutes);
-app.use('/api/journal', journalRoutes);
-
-// Optional: Health check
+// Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
+app.get('/', (req, res) => res.send('🚀 ControlHub API is running.'));
 
 // MongoDB connection
+mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
