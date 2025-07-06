@@ -1,30 +1,45 @@
 const express = require('express');
 const router = express.Router();
-const Model = require('../models/journal');
+const Journal = require('../models/journal');
 
-// GET all
+// GET the single journal entry
 router.get('/', async (req, res) => {
-  const items = await Model.find();
-  res.json(items);
+  try {
+    let entry = await Journal.findOne();
+    if (!entry) {
+      entry = new Journal({ text: '' });
+      await entry.save();
+    }
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch journal.' });
+  }
 });
 
-// POST create
+// POST: create or update the singleton journal
 router.post('/', async (req, res) => {
-  const newItem = new Model(req.body);
-  const saved = await newItem.save();
-  res.json(saved);
+  try {
+    let entry = await Journal.findOne();
+    if (!entry) {
+      entry = new Journal({ text: req.body.text });
+    } else {
+      entry.text = req.body.text;
+    }
+    await entry.save();
+    res.json(entry);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save journal.' });
+  }
 });
 
-// PUT update
-router.put('/:id', async (req, res) => {
-  const updated = await Model.findByIdAndUpdate(req.params.id, req.body, { new: true });
-  res.json(updated);
-});
-
-// DELETE
-router.delete('/:id', async (req, res) => {
-  await Model.findByIdAndDelete(req.params.id);
-  res.sendStatus(204);
+// DELETE: clear the journal
+router.delete('/', async (req, res) => {
+  try {
+    await Journal.deleteMany({});
+    res.sendStatus(204);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to clear journal.' });
+  }
 });
 
 module.exports = router;
