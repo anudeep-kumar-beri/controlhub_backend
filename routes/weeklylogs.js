@@ -6,11 +6,13 @@ const WeeklyLog = require('../models/weeklyLog');
 router.get('/', async (req, res) => {
   try {
     const items = await WeeklyLog.find();
+    console.log('Weekly logs:', items); 
     res.json(items);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
+
 
 // POST Create
 router.post('/', async (req, res) => {
