@@ -7,26 +7,28 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
-app.use(express.json()); // Parses JSON in request body
+app.use(express.json());
 
-// Allow both local dev and Vercel frontend
-const allowedOrigins = [
-  'http://localhost:3000',
-  'https://controlhub-frontend.vercel.app',
-  'https://controlhub-frontend-72r7hukck-anudeep-kumar-beris-projects.vercel.app'
-];
+const corsOptions = {
+  origin: function (origin, callback) {
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'https://controlhub-frontend.vercel.app',
+      'https://controlhub-frontend-72r7hukck-anudeep-kumar-beris-projects.vercel.app',
+      'https://controlhub-frontend-df3tmzrqe-anudeep-kumar-beris-projects.vercel.app'
+    ];
 
-app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman or server-side)
-    if (!origin || origin.endsWith('.vercel.app') || allowedOrigins.includes(origin)) {
+    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
       callback(null, true);
     } else {
+      console.warn(`❌ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true
-}));
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 // Routes
 const skillRoutes = require('./routes/skills');
@@ -43,12 +45,9 @@ app.use('/api/jobs', jobRoutes);
 app.use('/api/bookmarks', bookmarkRoutes);
 app.use('/api/journal', journalRoutes);
 
-// Optional: health check endpoint
-app.get('/api/ping', (req, res) => {
-  res.send('pong');
-});
+app.get('/api/ping', (req, res) => res.send('pong'));
 
-// MongoDB Connection
+// Mongo connection
 mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/controlhub')
   .then(() => {
     console.log('✅ MongoDB connected');
