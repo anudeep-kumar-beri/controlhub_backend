@@ -12,21 +12,25 @@ app.use(express.json());
 const corsOptions = {
   origin: function (origin, callback) {
     const allowedOrigins = [
-      'http://localhost:3000',
-      'https://controlhub-frontend.vercel.app',
-      'https://controlhub-frontend-72r7hukck-anudeep-kumar-beris-projects.vercel.app',
-      'https://controlhub-frontend-df3tmzrqe-anudeep-kumar-beris-projects.vercel.app'
-    ];
+  'http://localhost:3000',
+  'https://controlhub-frontend.vercel.app',
+];
 
-    if (!origin || allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+app.use(cors({
+  origin: (origin, callback) => {
+    if (
+      !origin ||                              // allow Postman/server-side
+      allowedOrigins.includes(origin) ||      // allow specific known ones
+      /\.vercel\.app$/.test(new URL(origin).hostname) // ✅ any *.vercel.app subdomain
+    ) {
       callback(null, true);
     } else {
-      console.warn(`❌ CORS blocked origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new Error(`Not allowed by CORS: ${origin}`));
     }
   },
-  credentials: true,
-};
+  credentials: true
+}));
+
 
 app.use(cors(corsOptions));
 
