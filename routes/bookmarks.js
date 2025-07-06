@@ -16,8 +16,8 @@ router.get('/', async (req, res) => {
 // POST – Add new bookmark
 router.post('/', async (req, res) => {
   try {
-    const { title, url, category } = req.body;
-    const newBookmark = await Bookmark.create({ title, url, category });
+    const { title, link, category } = req.body;
+    const newBookmark = await Bookmark.create({ title, link, category });
     res.status(201).json(newBookmark);
   } catch (err) {
     res.status(500).json({ error: 'Failed to add bookmark' });
@@ -27,10 +27,10 @@ router.post('/', async (req, res) => {
 // PUT – Update bookmark
 router.put('/:id', async (req, res) => {
   try {
-    const { title, url, category } = req.body;
+    const { title, link, category } = req.body;
     const updated = await Bookmark.findByIdAndUpdate(
       req.params.id,
-      { title, url, category },
+      { title, link, category },
       { new: true }
     );
     res.json(updated);
