@@ -17,9 +17,11 @@ const allowedOrigins = [
 app.use(cors({
   origin: (origin, callback) => {
     try {
+      // Allow no origin (Postman, SSR), any *.vercel.app subdomain, or known dev hosts
       if (
-        !origin || 
-        allowedOrigins.includes(origin) ||
+        !origin ||
+        origin === 'http://localhost:3000' ||
+        origin === 'https://controlhub-frontend.vercel.app' ||
         /\.vercel\.app$/.test(new URL(origin).hostname)
       ) {
         callback(null, true);
@@ -30,8 +32,9 @@ app.use(cors({
       callback(new Error('Invalid origin'));
     }
   },
-  credentials: true,
+  credentials: true
 }));
+
 
 // Routes
 const skillRoutes = require('./routes/skills');
