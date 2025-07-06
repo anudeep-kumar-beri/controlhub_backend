@@ -41,6 +41,9 @@ app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
 
+
+require('./cron');
+
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
 app.get('/', (req, res) => res.send('🚀 ControlHub API is running.'));
