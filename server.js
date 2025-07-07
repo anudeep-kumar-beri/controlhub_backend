@@ -35,12 +35,14 @@ app.use(cors({
 
 // Routes
 app.use('/api/skills', require('./routes/skills'));
-app.use('/api/fileshare', require('./routes/fileshare'));
+app.use('/api/projects', require('./routes/projects'));
 app.use('/api/weeklylogs', require('./routes/weeklylogs'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
 
+// ➕ New unified route for multiple projects
+app.use('/api/projects', require('./routes/projects'));
 
 require('./cron');
 
