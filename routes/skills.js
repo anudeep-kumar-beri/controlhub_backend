@@ -43,4 +43,16 @@ router.delete('/:id', async (req, res) => {
   }
 });
 
+// GET One
+router.get('/:id', async (req, res) => {
+  try {
+    const skill = await Skill.findById(req.params.id);
+    if (!skill) return res.status(404).json({ error: 'Not found' });
+    res.json(skill);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
 module.exports = router;
