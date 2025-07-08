@@ -16,7 +16,7 @@ app.use(cors({
       const allowed =
         !origin ||
         origin === 'http://localhost:3000' ||
-        origin === 'https://controlhub-frontend.vercel.app' ||
+        origin === 'https://control-hub.netlify.app' ||
         /\.vercel\.app$/.test(new URL(origin).hostname);
 
       if (allowed) {
