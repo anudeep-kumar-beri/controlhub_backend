@@ -1,82 +1,72 @@
 // utils/cron.js
 const cron = require('node-cron');
-const jsPDF = require('jspdf');
-require('jspdf-autotable');
-const axios = require('axios');
 const fs = require('fs');
-const path = require('path');
-const emailjs = require('@emailjs/nodejs');
+const PDFDocument = require('pdfkit');
 const WeeklyLog = require('../models/weeklyLog');
+const emailjs = require('@emailjs/nodejs');
 
-// Schedule: Every Sunday at 7 PM
-cron.schedule('0 19 * * 0', async () => {
-  try {
-    const logs = await WeeklyLog.find();
-    if (!logs.length) return;
+function generatePDF(logs, filePath) {
+  return new Promise((resolve, reject) => {
+    const doc = new PDFDocument();
+    const stream = fs.createWriteStream(filePath);
+    doc.pipe(stream);
 
-    // Generate PDF
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.setTextColor('#00eaff');
-    doc.text('Weekly Objectives Summary', 14, 20);
+    doc.fontSize(20).fillColor('#00eaff').text('Weekly Objectives Summary', { align: 'center' });
+    doc.moveDown();
 
-    let y = 30;
     logs.forEach((log) => {
-      doc.setFontSize(14);
-      doc.setTextColor('#00eaff');
-      doc.text(`Week: ${log.weekRange}`, 14, y);
-
-      const rows = log.objectives.map(obj => [`• ${obj.trim()}`]);
-      doc.autoTable({
-        startY: y + 5,
-        head: [['Objectives']],
-        body: rows,
-        styles: {
-          textColor: [0, 234, 255],
-          fillColor: '#181c23',
-          fontSize: 11,
-        },
-        headStyles: {
-          fillColor: '#00eaff',
-          textColor: '#ffffff',
-        },
-        margin: { left: 14, right: 14 },
+      doc.fontSize(14).fillColor('#00eaff').text(`Week: ${log.weekRange}`);
+      doc.moveDown(0.5);
+      log.objectives.forEach((obj, i) => {
+        doc.fontSize(12).fillColor('#ffffff').text(`• ${obj}`);
       });
-
-      y = doc.lastAutoTable.finalY + 10;
+      doc.moveDown();
     });
 
-    const filePath = path.join(__dirname, '../tmp/weekly_objectives.pdf');
-    doc.save(filePath);
+    doc.end();
+    stream.on('finish', () => resolve(filePath));
+    stream.on('error', reject);
+  });
+}
 
-    // Email using EmailJS Node SDK
-await emailjs.send(
-  process.env.EMAILJS_SERVICE_ID,
-  process.env.EMAILJS_TEMPLATE_ID,
-  {
-    to_email: 'anudeepkumar9347@gmail.com',
-    weekRange: logs[logs.length - 1].weekRange,
-  },
-  {
-    publicKey: process.env.EMAILJS_PUBLIC_KEY,
-    attachment: {
-      content: fs.readFileSync(filePath).toString('base64'),
-      name: 'weekly_objectives.pdf',
-    }
+async function sendEmailWithPDF(filePath) {
+  try {
+    const emailParams = {
+      to_email: process.env.RECIPIENT_EMAIL,
+      subject: '📅 Your Weekly Objectives Summary',
+      message: 'Attached is the automatically exported PDF of your weekly objectives from ControlHub.',
+      attachment: fs.readFileSync(filePath).toString('base64'),
+      filename: 'weekly_objectives.pdf',
+    };
+
+    await emailjs.send(
+      process.env.EMAILJS_SERVICE_ID,
+      process.env.EMAILJS_TEMPLATE_ID,
+      emailParams,
+      {
+        publicKey: process.env.EMAILJS_PUBLIC_KEY,
+        privateKey: process.env.EMAILJS_PRIVATE_KEY,
+      }
+    );
+
+    console.log('✅ Weekly log email sent successfully.');
+  } catch (error) {
+    console.error('❌ Email sending failed:', error);
   }
-);
+}
 
+cron.schedule('0 17 * * 0', async () => {
+  try {
+    const logs = await WeeklyLog.find();
+    if (logs.length === 0) return;
 
-    console.log('📨 Weekly objectives emailed successfully.');
+    const filePath = './weekly_summary.pdf';
+    await generatePDF(logs, filePath);
+    await sendEmailWithPDF(filePath);
 
-    // Clean up local file
-    fs.unlinkSync(filePath);
-
-    // Delete all logs
     await WeeklyLog.deleteMany({});
-    console.log('🧹 Weekly logs cleared from database.');
-
-  } catch (err) {
-    console.error('🚨 Weekly email automation failed:', err);
+    console.log('🗑️ Weekly logs cleared after email.');
+  } catch (error) {
+    console.error('❌ Weekly log cron job failed:', error);
   }
 });
