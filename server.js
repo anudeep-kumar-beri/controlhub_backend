@@ -44,7 +44,8 @@ app.use('/api/journal', require('./routes/journal'));
 // ➕ New unified route for multiple projects
 app.use('/api/projects', require('./routes/projects'));
 
-require('./cron');
+require('./utils/cron'); // Add this near your other imports
+
 
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
