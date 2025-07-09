@@ -3,7 +3,7 @@ const WeeklyLog = require('../models/weeklyLog');
 const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
-const emailjs = require('@emailjs/browser');
+const emailjs = require('@emailjs/node');
 
 // Existing job function (no changes here)
 async function generateAndEmailLogs() {
