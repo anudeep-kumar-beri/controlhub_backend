@@ -50,21 +50,22 @@ cron.schedule('0 19 * * 0', async () => {
     doc.save(filePath);
 
     // Email using EmailJS Node SDK
-    await emailjs.send(
-      'service_dhqpoyu',
-      'template_r7kiceh',
-      {
-        to_email: 'anudeepkumar9347@gmail.com',
-        weekRange: logs[logs.length - 1].weekRange,
-      },
-      {
-        publicKey: 'ygpvqWkGBFwtRLXq5',
-        attachment: {
-          content: fs.readFileSync(filePath).toString('base64'),
-          name: 'weekly_objectives.pdf',
-        }
-      }
-    );
+await emailjs.send(
+  process.env.EMAILJS_SERVICE_ID,
+  process.env.EMAILJS_TEMPLATE_ID,
+  {
+    to_email: 'anudeepkumar9347@gmail.com',
+    weekRange: logs[logs.length - 1].weekRange,
+  },
+  {
+    publicKey: process.env.EMAILJS_PUBLIC_KEY,
+    attachment: {
+      content: fs.readFileSync(filePath).toString('base64'),
+      name: 'weekly_objectives.pdf',
+    }
+  }
+);
+
 
     console.log('📨 Weekly objectives emailed successfully.');
 
