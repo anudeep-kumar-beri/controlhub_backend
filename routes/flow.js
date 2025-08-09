@@ -1,10 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const flowController = require('../controllers/flowController');
+const flowWorkspaceController = require('../controllers/flowWorkspaceController');
 
-router.post('/save', flowController.saveWorkspace);
-router.get('/:name', flowController.getWorkspace);
-router.get('/', flowController.listWorkspaces);
-router.delete('/:name', flowController.deleteWorkspace);
+// Create workspace
+router.post('/', flowWorkspaceController.createWorkspace);
+
+// Get all workspaces (optional ?userId= query)
+router.get('/', flowWorkspaceController.getWorkspaces);
+
+// Get a single workspace
+router.get('/:id', flowWorkspaceController.getWorkspaceById);
+
+// Update workspace
+router.put('/:id', flowWorkspaceController.updateWorkspace);
+
+// Delete workspace
+router.delete('/:id', flowWorkspaceController.deleteWorkspace);
 
 module.exports = router;
