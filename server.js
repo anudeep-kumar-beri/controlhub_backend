@@ -33,6 +33,9 @@ app.use(cors({
   credentials: true
 }));
 
+// Define the flowRoutes variable by requiring the module
+const flowRoutes = require('./routes/flow');
+
 // Routes
 app.use('/api/skills', require('./routes/skills'));
 app.use('/api/projects', require('./routes/projects'));
@@ -40,13 +43,12 @@ app.use('/api/weeklylogs', require('./routes/weeklylogs'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
-app.use('/api/flow', flowRoutes);
+app.use('/api/flow', flowRoutes); // This line now works
 
 // ➕ New unified route for multiple projects
 app.use('/api/projects', require('./routes/projects'));
 
 require('./utils/cron'); // Add this near your other imports
-
 
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
