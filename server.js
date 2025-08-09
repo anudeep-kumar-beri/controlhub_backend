@@ -1,13 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const emailjs = require('@emailjs/nodejs');
+const emailjs = require('@emailjs/nodejs'); // Uncomment if used
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Middleware
-app.use(express.json());
 
 // CORS Configuration
 app.use(cors({
@@ -33,8 +30,8 @@ app.use(cors({
   credentials: true
 }));
 
-// Define the flowRoutes variable by requiring the module
-const flowRoutes = require('./routes/flow');
+// Middleware
+app.use(express.json());
 
 // Routes
 app.use('/api/skills', require('./routes/skills'));
@@ -43,12 +40,9 @@ app.use('/api/weeklylogs', require('./routes/weeklylogs'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
-app.use('/api/flow', flowRoutes); // This line now works
+app.use('/api/flow', require('./routes/flow'));
 
-// ➕ New unified route for multiple projects
-app.use('/api/projects', require('./routes/projects'));
-
-require('./utils/cron'); // Add this near your other imports
+require('./utils/cron');
 
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
@@ -56,6 +50,12 @@ app.get('/', (req, res) => res.send('🚀 ControlHub API is running.'));
 
 // MongoDB connection
 mongoose.set('strictQuery', true);
+
+if (!process.env.MONGO_URI) {
+  console.error('❌ Missing MONGO_URI in environment variables.');
+  process.exit(1);
+}
+
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
