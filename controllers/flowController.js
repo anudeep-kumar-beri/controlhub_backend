@@ -114,3 +114,24 @@ exports.deleteWorkspace = async (req, res) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
+
+/**
+ * Get a workspace by workspaceName (optionally filtered by userId)
+ */
+exports.getWorkspaceByName = async (req, res) => {
+  try {
+    const { workspaceName } = req.params;
+    const { userId } = req.query;
+    const filter = { workspaceName };
+    if (userId) filter.userId = userId;
+
+    const workspace = await FlowWorkspace.findOne(filter);
+    if (!workspace) {
+      return res.status(404).json({ message: 'Workspace not found' });
+    }
+    return res.json(workspace);
+  } catch (error) {
+    console.error('Error fetching workspace by name:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};

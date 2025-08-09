@@ -17,4 +17,7 @@ router.put('/:id', flowWorkspaceController.updateWorkspace);
 // Delete workspace
 router.delete('/:id', flowWorkspaceController.deleteWorkspace);
 
+// Get a workspace by workspaceName (optionally with ?userId=)
+router.get('/by-name/:workspaceName', flowWorkspaceController.getWorkspaceByName);
+
 module.exports = router;
