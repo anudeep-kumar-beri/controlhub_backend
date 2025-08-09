@@ -40,6 +40,7 @@ app.use('/api/weeklylogs', require('./routes/weeklylogs'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
+app.use('/api/flow', flowRoutes);
 
 // ➕ New unified route for multiple projects
 app.use('/api/projects', require('./routes/projects'));
