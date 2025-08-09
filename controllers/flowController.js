@@ -1,4 +1,3 @@
-// controllers/flowWorkspaceController.js
 const FlowWorkspace = require('../models/flowWorkspace');
 
 /**
@@ -12,8 +11,7 @@ exports.createWorkspace = async (req, res) => {
       return res.status(400).json({ message: 'Workspace name is required' });
     }
 
-    // Ensure workspace is unique for the same user
-    const existing = await FlowWorkspace.findOne({ userId, workspaceName });
+    const existing = await FlowWorkspace.findOne({ userId, workspaceName: workspaceName.trim() });
     if (existing) {
       return res.status(409).json({ message: 'Workspace name already exists for this user' });
     }
@@ -67,7 +65,7 @@ exports.getWorkspaceById = async (req, res) => {
 };
 
 /**
- * Update a workspace
+ * Update a workspace by ID
  */
 exports.updateWorkspace = async (req, res) => {
   try {
@@ -132,6 +130,43 @@ exports.getWorkspaceByName = async (req, res) => {
     return res.json(workspace);
   } catch (error) {
     console.error('Error fetching workspace by name:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+
+/**
+ * Update a workspace by workspaceName
+ */
+exports.updateWorkspaceByName = async (req, res) => {
+  try {
+    const { workspaceName } = req.params;
+    const { nodes, edges, metadata, userId } = req.body; // Use userId from body for filtering
+
+    const filter = { workspaceName: workspaceName.trim() };
+    if (userId) filter.userId = userId;
+
+    const updateFields = {
+      updatedAt: Date.now()
+    };
+
+    if (nodes) updateFields.nodes = nodes;
+    if (edges) updateFields.edges = edges;
+    if (metadata) updateFields.metadata = metadata;
+
+    const updated = await FlowWorkspace.findOneAndUpdate(
+      filter,
+      updateFields,
+      { new: true, runValidators: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Workspace not found' });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    console.error('Error updating workspace by name:', error);
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 };

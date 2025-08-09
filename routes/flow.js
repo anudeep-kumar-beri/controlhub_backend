@@ -2,22 +2,29 @@ const express = require('express');
 const router = express.Router();
 const flowWorkspaceController = require('../controllers/flowController');
 
-// Create workspace
+// Corrected Order: Most specific routes first
+// Get a workspace by workspaceName
+router.get('/by-name/:workspaceName', flowWorkspaceController.getWorkspaceByName);
+
+// Update workspace by workspaceName (new route for saving)
+router.put('/by-name/:workspaceName', flowWorkspaceController.updateWorkspaceByName);
+
+// -----------------------------------------------------------
+// Remaining routes (order doesn't matter as much for these now)
+// Create a new workspace
 router.post('/', flowWorkspaceController.createWorkspace);
 
-// Get all workspaces (optional ?userId= query)
+// Get all workspaces
 router.get('/', flowWorkspaceController.getWorkspaces);
 
-// Get a single workspace
+// Get a single workspace by ID
 router.get('/:id', flowWorkspaceController.getWorkspaceById);
 
-// Update workspace
+// Update a workspace by ID
 router.put('/:id', flowWorkspaceController.updateWorkspace);
 
-// Delete workspace
+// Delete a workspace by ID
 router.delete('/:id', flowWorkspaceController.deleteWorkspace);
 
-// Get a workspace by workspaceName (optionally with ?userId=)
-router.get('/by-name/:workspaceName', flowWorkspaceController.getWorkspaceByName);
 
 module.exports = router;
