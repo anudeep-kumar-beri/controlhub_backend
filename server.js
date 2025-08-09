@@ -33,7 +33,6 @@ app.use(cors({
   credentials: true
 }));
 
-// Define the flowRoutes variable by requiring the module
 const flowRoutes = require('./routes/flow');
 
 // Routes
@@ -45,9 +44,7 @@ app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
 app.use('/api/flow', require('./routes/flow'));
 
-// ➕ New unified route for multiple projects
-
-require('./utils/cron'); // Add this near your other imports
+require('./utils/cron');
 
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
@@ -58,6 +55,29 @@ mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
+
+    // --- New Code: Check for and create a default workspace ---
+    const FlowWorkspace = require('./models/flowWorkspace');
+    FlowWorkspace.findOne({ workspaceName: 'Default' })
+      .then(defaultWorkspace => {
+        if (!defaultWorkspace) {
+          const newWorkspace = new FlowWorkspace({
+            workspaceName: 'Default',
+            nodes: [],
+            edges: []
+          });
+          newWorkspace.save().then(() => {
+            console.log('✨ Default workspace created automatically.');
+          }).catch(err => {
+            console.error('❌ Failed to create default workspace:', err);
+          });
+        }
+      })
+      .catch(err => {
+        console.error('❌ Failed to check for default workspace:', err);
+      });
+    // --- End New Code ---
+
     app.listen(PORT, () => {
       console.log(`🚀 Server running at http://localhost:${PORT}`);
     });
