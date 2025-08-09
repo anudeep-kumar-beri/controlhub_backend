@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const flowWorkspaceController = require('../controllers/flowWorkspaceController');
+const flowWorkspaceController = require('../controllers/flowController');
 
 // Create workspace
 router.post('/', flowWorkspaceController.createWorkspace);
