@@ -1,3 +1,8 @@
+require('dotenv').config();
+
+
+
+
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -33,8 +38,6 @@ app.use(cors({
   credentials: true
 }));
 
-const flowRoutes = require('./routes/flow');
-
 // Routes
 app.use('/api/skills', require('./routes/skills'));
 app.use('/api/projects', require('./routes/projects'));
@@ -42,9 +45,13 @@ app.use('/api/weeklylogs', require('./routes/weeklylogs'));
 app.use('/api/jobs', require('./routes/jobs'));
 app.use('/api/bookmarks', require('./routes/bookmarks'));
 app.use('/api/journal', require('./routes/journal'));
-app.use('/api/flow', require('./routes/flow'));
+app.use('/api/flow', require('./routes/flow')); // Updated to use the correct route
+app.use('/api/finance', require('./routes/finance'));
 
-require('./utils/cron');
+// ➕ New unified route for multiple projects (optional duplicate?)
+app.use('/api/projects', require('./routes/projects'));
+
+require('./utils/cron'); // Add this near your other imports
 
 // Health Check
 app.get('/api/ping', (req, res) => res.send('pong'));
@@ -55,29 +62,6 @@ mongoose.set('strictQuery', true);
 mongoose.connect(process.env.MONGO_URI)
   .then(() => {
     console.log('✅ MongoDB connected');
-
-    // --- New Code: Check for and create a default workspace ---
-    const FlowWorkspace = require('./models/flowWorkspace');
-    FlowWorkspace.findOne({ workspaceName: 'Default' })
-      .then(defaultWorkspace => {
-        if (!defaultWorkspace) {
-          const newWorkspace = new FlowWorkspace({
-            workspaceName: 'Default',
-            nodes: [],
-            edges: []
-          });
-          newWorkspace.save().then(() => {
-            console.log('✨ Default workspace created automatically.');
-          }).catch(err => {
-            console.error('❌ Failed to create default workspace:', err);
-          });
-        }
-      })
-      .catch(err => {
-        console.error('❌ Failed to check for default workspace:', err);
-      });
-    // --- End New Code ---
-
     app.listen(PORT, () => {
       console.log(`🚀 Server running at http://localhost:${PORT}`);
     });

@@ -1,172 +1,59 @@
+// controllers/flowController.js
 const FlowWorkspace = require('../models/flowWorkspace');
 
-/**
- * Create a new workspace
- */
-exports.createWorkspace = async (req, res) => {
+exports.saveWorkspace = async (req, res) => {
   try {
-    const { userId, workspaceName, nodes = [], edges = [], metadata = {} } = req.body;
+    const { workspaceName, nodes, edges, metadata } = req.body;
 
-    if (!workspaceName?.trim()) {
-      return res.status(400).json({ message: 'Workspace name is required' });
+    let workspace = await FlowWorkspace.findOne({ workspaceName });
+
+    if (workspace) {
+      workspace.nodes = nodes;
+      workspace.edges = edges;
+      workspace.metadata = metadata;
+      await workspace.save();
+    } else {
+      workspace = new FlowWorkspace({ workspaceName, nodes, edges, metadata });
+      await workspace.save();
     }
 
-    const existing = await FlowWorkspace.findOne({ userId, workspaceName: workspaceName.trim() });
-    if (existing) {
-      return res.status(409).json({ message: 'Workspace name already exists for this user' });
-    }
-
-    const workspace = new FlowWorkspace({
-      userId,
-      workspaceName: workspaceName.trim(),
-      nodes,
-      edges,
-      metadata
-    });
-
-    await workspace.save();
-    return res.status(201).json(workspace);
-  } catch (error) {
-    console.error('Error creating workspace:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(200).json({ message: 'Workspace saved successfully', workspace });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save workspace', details: err.message });
   }
 };
 
-/**
- * Get all workspaces (optionally filtered by userId)
- */
-exports.getWorkspaces = async (req, res) => {
+exports.getWorkspace = async (req, res) => {
   try {
-    const { userId } = req.query;
-    const filter = userId ? { userId } : {};
+    const { name } = req.params;
+    const workspace = await FlowWorkspace.findOne({ workspaceName: name });
 
-    const workspaces = await FlowWorkspace.find(filter).sort({ updatedAt: -1 });
-    return res.json(workspaces);
-  } catch (error) {
-    console.error('Error fetching workspaces:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    if (!workspace) return res.status(404).json({ error: 'Workspace not found' });
+
+    res.status(200).json(workspace);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch workspace', details: err.message });
   }
 };
 
-/**
- * Get a single workspace by ID
- */
-exports.getWorkspaceById = async (req, res) => {
+exports.listWorkspaces = async (req, res) => {
   try {
-    const workspace = await FlowWorkspace.findById(req.params.id);
-    if (!workspace) {
-      return res.status(404).json({ message: 'Workspace not found' });
-    }
-    return res.json(workspace);
-  } catch (error) {
-    console.error('Error fetching workspace:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    const workspaces = await FlowWorkspace.find({}, 'workspaceName');
+    res.status(200).json(workspaces);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to list workspaces', details: err.message });
   }
 };
 
-/**
- * Update a workspace by ID
- */
-exports.updateWorkspace = async (req, res) => {
-  try {
-    const { nodes, edges, metadata, workspaceName } = req.body;
-
-    const updateFields = {
-      updatedAt: Date.now()
-    };
-
-    if (workspaceName) updateFields.workspaceName = workspaceName.trim();
-    if (nodes) updateFields.nodes = nodes;
-    if (edges) updateFields.edges = edges;
-    if (metadata) updateFields.metadata = metadata;
-
-    const updated = await FlowWorkspace.findByIdAndUpdate(
-      req.params.id,
-      updateFields,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: 'Workspace not found' });
-    }
-
-    return res.json(updated);
-  } catch (error) {
-    console.error('Error updating workspace:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-/**
- * Delete a workspace
- */
 exports.deleteWorkspace = async (req, res) => {
   try {
-    const deleted = await FlowWorkspace.findByIdAndDelete(req.params.id);
-    if (!deleted) {
-      return res.status(404).json({ message: 'Workspace not found' });
-    }
-    return res.json({ message: 'Workspace deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting workspace:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
+    const { name } = req.params;
+    const result = await FlowWorkspace.findOneAndDelete({ workspaceName: name });
 
-/**
- * Get a workspace by workspaceName (optionally filtered by userId)
- */
-exports.getWorkspaceByName = async (req, res) => {
-  try {
-    const { workspaceName } = req.params;
-    const { userId } = req.query;
-    const filter = { workspaceName };
-    if (userId) filter.userId = userId;
+    if (!result) return res.status(404).json({ error: 'Workspace not found' });
 
-    const workspace = await FlowWorkspace.findOne(filter);
-    if (!workspace) {
-      return res.status(404).json({ message: 'Workspace not found' });
-    }
-    return res.json(workspace);
-  } catch (error) {
-    console.error('Error fetching workspace by name:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
-  }
-};
-
-
-/**
- * Update a workspace by workspaceName
- */
-exports.updateWorkspaceByName = async (req, res) => {
-  try {
-    const { workspaceName } = req.params;
-    const { nodes, edges, metadata, userId } = req.body; // Use userId from body for filtering
-
-    const filter = { workspaceName: workspaceName.trim() };
-    if (userId) filter.userId = userId;
-
-    const updateFields = {
-      updatedAt: Date.now()
-    };
-
-    if (nodes) updateFields.nodes = nodes;
-    if (edges) updateFields.edges = edges;
-    if (metadata) updateFields.metadata = metadata;
-
-    const updated = await FlowWorkspace.findOneAndUpdate(
-      filter,
-      updateFields,
-      { new: true, runValidators: true }
-    );
-
-    if (!updated) {
-      return res.status(404).json({ message: 'Workspace not found' });
-    }
-
-    return res.json(updated);
-  } catch (error) {
-    console.error('Error updating workspace by name:', error);
-    return res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(200).json({ message: 'Workspace deleted successfully' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete workspace', details: err.message });
   }
 };

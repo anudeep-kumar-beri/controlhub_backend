@@ -1,30 +1,16 @@
+// routes/flow.js
 const express = require('express');
 const router = express.Router();
-const flowWorkspaceController = require('../controllers/flowController');
+const flowController = require('../controllers/flowController');
 
-// Corrected Order: Most specific routes first
-// Get a workspace by workspaceName
-router.get('/by-name/:workspaceName', flowWorkspaceController.getWorkspaceByName);
+// Test route
+router.get('/', (req, res) => {
+  res.send('Flow API is working');
+});
 
-// Update workspace by workspaceName (new route for saving)
-router.put('/by-name/:workspaceName', flowWorkspaceController.updateWorkspaceByName);
-
-// -----------------------------------------------------------
-// Remaining routes (order doesn't matter as much for these now)
-// Create a new workspace
-router.post('/', flowWorkspaceController.createWorkspace);
-
-// Get all workspaces
-router.get('/', flowWorkspaceController.getWorkspaces);
-
-// Get a single workspace by ID
-router.get('/:id', flowWorkspaceController.getWorkspaceById);
-
-// Update a workspace by ID
-router.put('/:id', flowWorkspaceController.updateWorkspace);
-
-// Delete a workspace by ID
-router.delete('/:id', flowWorkspaceController.deleteWorkspace);
-
+router.post('/save', flowController.saveWorkspace);
+router.get('/:name', flowController.getWorkspace);
+router.delete('/:name', flowController.deleteWorkspace);
+router.get('/list/all', flowController.listWorkspaces); // changed path to avoid conflict with /:name
 
 module.exports = router;
