@@ -17,9 +17,10 @@ exports.pushRecords = async (req, res) => {
             store: r.store,
             id: r.id,
             data: r.data,
-            deleted: !!r.deleted,
-            // If client provided updatedAt, use it; else use server time via timestamps option
-            ...(r.updatedAt ? { updatedAt: new Date(r.updatedAt) } : {})
+            deleted: !!r.deleted
+            // NOTE: We intentionally ignore client supplied updatedAt to ensure server timestamps
+            // are monotonically increasing for replication. Using client clocks caused missed pulls
+            // when pushes were delayed and had past timestamps.
           }
         },
         upsert: true
