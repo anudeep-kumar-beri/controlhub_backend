@@ -5,7 +5,8 @@ const JobSchema = new mongoose.Schema({
   company: String,
   location: String,
   status: String,
-  link: String
+  link: String,
+  priority: { type: String, enum: ['Low', 'Medium', 'High'], default: 'Medium' }
 }, { timestamps: true });
 
 module.exports = mongoose.model('Job', JobSchema);
