@@ -51,3 +51,19 @@ exports.pullChanges = async (req, res) => {
     res.status(500).json({ error: 'internal_error' });
   }
 };
+
+// GET /api/finance/summary
+exports.getSummary = async (req, res) => {
+  try {
+    const records = await FinanceRecord.find({ deleted: { $ne: true } }).lean().exec();
+    let inflow = 0, outflow = 0;
+    records.forEach(r => {
+      inflow += Number(r.data.inflow) || 0;
+      outflow += Number(r.data.outflow) || 0;
+    });
+    res.json({ inflow, outflow, net: inflow - outflow });
+  } catch (err) {
+    console.error('getSummary error', err);
+    res.status(500).json({ error: 'internal_error' });
+  }
+};
